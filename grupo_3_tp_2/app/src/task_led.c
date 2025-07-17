@@ -31,16 +31,19 @@ void led_blue_on() {
 }
 
 void task_led(void *argument) {
+
 	led_t *leds = (led_t*) argument;
-	led_event_t event;
+	led_event_t *led_event;
+
+	leds_off();
 
 	while (1) {
 		for (int i = 0; i < 3; i++) {
-			if (xQueueReceive(leds[i].queue, &event, 0) == pdTRUE) {
+			if (xQueueReceive(leds[i].queue, (void*)&led_event, 0) == pdTRUE) {
 				// Apagar todos los LEDs
 				leds_off();
 
-				switch (event.type) {
+				switch (led_event->type) {
 				case LED_EVENT_RED:
 					log_uart("LED → Encender LED Rojo\r\n");
 					led_red_on();
@@ -57,6 +60,9 @@ void task_led(void *argument) {
 					log_uart("LED → Estado Desconocido\r\n");
 					break;
 				}
+
+				vPortFree(led_event);
+				log_uart("LED → Memoria led_event liberada \r\n");
 			}
 		}
 
