@@ -39,7 +39,7 @@ void task_led(void *argument) {
 
 	while (1) {
 		for (int i = 0; i < 3; i++) {
-			if (xQueueReceive(leds[i].queue, (void*)&led_event, 0) == pdTRUE) {
+			if (xQueueReceive(leds[i].queue, (void*) &led_event, 0) == pdTRUE) {
 				// Apagar todos los LEDs
 				leds_off();
 

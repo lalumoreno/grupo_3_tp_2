@@ -21,7 +21,8 @@ void task_ui(void *argument) {
 		portMAX_DELAY) == pdTRUE) {
 
 			bool valid_event = true;
-			led_event_t *led_event = pvPortMalloc(sizeof(led_event_t));
+			led_event_t *led_event = (led_event_t*) pvPortMalloc(
+					sizeof(led_event_t));
 			if (led_event != NULL) {
 
 				char msg[64];
@@ -31,7 +32,7 @@ void task_ui(void *argument) {
 
 				switch (button_event->type) {
 				case BUTTON_TYPE_PULSE:
-					log_uart("UI → Boton tipo PULSO- activar LED rojo\r\n");
+					log_uart("UI → Boton tipo PULSO - activar LED rojo\r\n");
 					led_event->type = LED_EVENT_RED;
 					break;
 
@@ -65,6 +66,8 @@ void task_ui(void *argument) {
 
 				vPortFree(button_event);
 				log_uart("UI → Memoria button_event liberada \r\n");
+			} else {
+				log_uart("BTN → Memoria insuficiente\r\n");
 			}
 		}
 	}

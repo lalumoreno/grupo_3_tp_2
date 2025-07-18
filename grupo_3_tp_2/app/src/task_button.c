@@ -61,6 +61,8 @@ static button_event_t button_process_state_(bool is_pressed) {
 		button_info.counter = 0;
 		button_info.state = BUTTON_STATE_IDLE;
 	}
+
+	return event;
 }
 
 /* Tarea del botón (modo polling) */
@@ -80,22 +82,27 @@ void task_button(void *argument) {
 
 		if (temp_event.type != BUTTON_TYPE_NONE) {
 
-			log_uart("HERE");
-			button_event_t *bnt_event = pvPortMalloc(sizeof(button_event_t));
+			button_event_t *bnt_event = (button_event_t*) pvPortMalloc(
+					sizeof(button_event_t));
+
 			if (bnt_event != NULL) {
 				*bnt_event = temp_event;
 
-				char msg[64];
-				sprintf(msg, "BTN → Memoria bnt_event alocada: %d \r\n",
-						sizeof(*bnt_event));
-				log_uart(msg);
-
-				// Mostrar mensaje por UART
-				sprintf(msg, "BTN → Boton: %s - Tiempo: %lu ms\r\n",
-						(bnt_event->type == BUTTON_TYPE_LONG) ? "LARGO" :
-						(bnt_event->type == BUTTON_TYPE_SHORT) ?
-								"CORTO" : "PULSO", bnt_event->duration);
-				log_uart(msg);
+				// ESTOS LOGS ESTAN CONGELANDO EL PROGRAMA. FALTA VERIFICAR
+				/*
+				 char msg[64];
+				 sprintf(msg, "BTN → Memoria bnt_event alocada: %d \r\n",
+				 sizeof(*bnt_event));
+				 log_uart(msg);
+				 */
+				/*
+				 // Mostrar mensaje por UART
+				 char msg[100];
+				 sprintf(msg, "BTN → Boton: %s - Tiempo: ms\r\n",
+				 (bnt_event->type == BUTTON_TYPE_LONG) ? "LARGO" :
+				 (bnt_event->type == BUTTON_TYPE_SHORT) ?
+				 "CORTO" : "PULSO", bnt_event->duration);
+				 log_uart(msg);*/
 
 				// Enviar evento a la cola
 				BaseType_t sent = xQueueSend(button_event_queue, &bnt_event, 0);
@@ -105,6 +112,8 @@ void task_button(void *argument) {
 					vPortFree(bnt_event);  // Liberar si no se pudo enviar
 					log_uart("BTN → Memoria de bnt_event liberada \r\n");
 				}
+			} else {
+				log_uart("BTN → Memoria insuficiente\r\n");
 			}
 		}
 
