@@ -24,7 +24,7 @@ void app_init(void) {
 	}
 
 	/* Crear cola de eventos del botón */
-	button_event_queue = xQueueCreate(1, sizeof(button_event_t));
+	button_event_queue = xQueueCreate(1, sizeof(button_event_t*));
 	configASSERT(button_event_queue != NULL);
 	if (button_event_queue == NULL) {
 		log_uart("Error: no se pudo crear la cola de botón\r\n");
@@ -34,7 +34,7 @@ void app_init(void) {
 
 	// Crear cola de leds
 	for (int i = 0; i < led_count; i++) {
-		leds[i].queue = xQueueCreate(5, sizeof(led_event_t));
+		leds[i].queue = xQueueCreate(5, sizeof(led_event_t*));
 	}
 
 	/* Crear tareas del sistema */
