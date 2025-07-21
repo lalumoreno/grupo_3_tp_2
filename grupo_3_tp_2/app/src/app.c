@@ -15,7 +15,7 @@ const int led_count = sizeof(leds) / sizeof(led_t);
 
 void app_init(void) {
 	/* Crear cola UART */
-	uart_queue = xQueueCreate(5, sizeof(char[64]));
+	uart_queue = xQueueCreate(10, sizeof(char*));
 	configASSERT(uart_queue != NULL);
 	if (uart_queue == NULL) {
 		// Fallback directo si falla
@@ -57,10 +57,10 @@ void app_init(void) {
 	configASSERT(status == pdPASS);
 
 	/* Enviar mensaje por UART */
-	log_uart("APP → App init\r\n");
+	log_uart("APP - App init\r\n");
 
 #ifdef _F429ZI_
-	log_uart("APP → Board F429ZI\r\n");
+	log_uart("APP - Board F429ZI\r\n");
 #endif
 
 }

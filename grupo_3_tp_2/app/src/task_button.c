@@ -40,7 +40,7 @@ static button_event_t button_process_state_(bool is_pressed) {
 	button_event_t event = { BUTTON_TYPE_NONE, 0 };
 
 	if (is_pressed) {
-		log_uart("BTN → Estado del boton: PRESIONADO\r\n");
+		log_uart("BTN - Estado del boton: PRESIONADO\r\n");
 		button_info.counter += TASK_PERIOD_MS;
 		button_info.state = BUTTON_STATE_PRESSED;
 	} else {
@@ -65,6 +65,12 @@ static button_event_t button_process_state_(bool is_pressed) {
 	return event;
 }
 
+static void callback_process_completed_(void *context) {
+	button_event_t *event = (button_event_t*) context;
+	vPortFree(event);
+	log_uart("BTN - Memoria bnt_event liberada\r\n");
+}
+
 /* Tarea del botón (modo polling) */
 void task_button(void *argument) {
 
@@ -86,34 +92,33 @@ void task_button(void *argument) {
 					sizeof(button_event_t));
 
 			if (bnt_event != NULL) {
-				*bnt_event = temp_event;
+				char msg[64];
+				sprintf(msg, "UUI - Memoria bnt_event alocada: %d\r\n",
+						sizeof(*bnt_event));
+				log_uart(msg);
 
-				// ESTOS LOGS ESTAN CONGELANDO EL PROGRAMA. FALTA VERIFICAR
-				/*
-				 char msg[64];
-				 sprintf(msg, "BTN → Memoria bnt_event alocada: %d \r\n",
-				 sizeof(*bnt_event));
-				 log_uart(msg);
-				 */
-				/*
-				 // Mostrar mensaje por UART
-				 char msg[100];
-				 sprintf(msg, "BTN → Boton: %s - Tiempo: ms\r\n",
-				 (bnt_event->type == BUTTON_TYPE_LONG) ? "LARGO" :
-				 (bnt_event->type == BUTTON_TYPE_SHORT) ?
-				 "CORTO" : "PULSO", bnt_event->duration);
-				 log_uart(msg);*/
+				*bnt_event = temp_event;
+				bnt_event->callback_process_completed =
+						callback_process_completed_;
+				bnt_event->callback_context = bnt_event;
+
+				// Mostrar mensaje por UART
+				sprintf(msg, "BTN - Boton: %s - Tiempo: %d ms\r\n",
+						(bnt_event->type == BUTTON_TYPE_LONG) ? "LARGO" :
+						(bnt_event->type == BUTTON_TYPE_SHORT) ?
+								"CORTO" : "PULSO", bnt_event->duration);
+				log_uart(msg);
 
 				// Enviar evento a la cola
 				BaseType_t sent = xQueueSend(button_event_queue, &bnt_event, 0);
 				if (sent != pdPASS) {
 					log_uart(
-							"BTN → Error agregando evento a la cola button_event_queue\r\n");
+							"BTN - Error agregando evento a la cola button_event_queue\r\n");
 					vPortFree(bnt_event);  // Liberar si no se pudo enviar
 					log_uart("BTN → Memoria de bnt_event liberada \r\n");
 				}
 			} else {
-				log_uart("BTN → Memoria insuficiente\r\n");
+				log_uart("BTN - Memoria insuficiente\r\n");
 			}
 		}
 

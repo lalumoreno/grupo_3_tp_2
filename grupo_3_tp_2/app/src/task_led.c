@@ -15,7 +15,7 @@ void leds_off() {
 	HAL_GPIO_WritePin(LED_RED_PORT, LED_RED_PIN, GPIO_PIN_RESET);
 	HAL_GPIO_WritePin(LED_GREEN_PORT, LED_GREEN_PIN, GPIO_PIN_RESET);
 	HAL_GPIO_WritePin(LED_BLUE_PORT, LED_BLUE_PIN, GPIO_PIN_RESET);
-	log_uart("LED → LEDs apagados\r\n");
+	log_uart("LED - LEDs apagados\r\n");
 }
 
 void led_red_on() {
@@ -45,24 +45,29 @@ void task_led(void *argument) {
 
 				switch (led_event->type) {
 				case LED_EVENT_RED:
-					log_uart("LED → Encender LED Rojo\r\n");
+					log_uart("LED - Encender LED Rojo\r\n");
 					led_red_on();
 					break;
 				case LED_EVENT_GREEN:
-					log_uart("LED → Encender LED Verde\r\n");
+					log_uart("LED - Encender LED Verde\r\n");
 					led_green_on();
 					break;
 				case LED_EVENT_BLUE:
-					log_uart("LED → Encender LED Azul\r\n");
+					log_uart("LED - Encender LED Azul\r\n");
 					led_blue_on();
 					break;
 				default:
-					log_uart("LED → Estado Desconocido\r\n");
+					log_uart("LED - Estado Desconocido\r\n");
 					break;
 				}
 
-				vPortFree(led_event);
-				log_uart("LED → Memoria led_event liberada \r\n");
+				log_uart("LED - Evento led_event procesado \r\n");
+				if (led_event->callback_process_completed != NULL) {
+					led_event->callback_process_completed(led_event);
+				} else {
+					log_uart("LED - led_event callback vacio\r\n");
+				}
+
 			}
 		}
 
