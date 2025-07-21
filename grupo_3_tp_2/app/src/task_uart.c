@@ -11,12 +11,13 @@ extern QueueHandle_t uart_queue;  // Definida en app.c
 #define UART_MSG_MAX_LEN 64
 
 void task_uart(void *argument) {
-	char msg[UART_MSG_MAX_LEN];
+	char *msg;
 
 	while (1) {
 		if (xQueueReceive(uart_queue, &msg, portMAX_DELAY) == pdTRUE) {
 			HAL_UART_Transmit(&huart2, (uint8_t*) msg, strlen(msg),
-			HAL_MAX_DELAY);
+					HAL_MAX_DELAY);
+			vPortFree(msg);  // Libera la memoria asignada en log_uart
 		}
 	}
 }
@@ -29,14 +30,16 @@ void log_uart(const char *msg) {
 	if (msg == NULL)
 		return;
 
-	char buffer[UART_MSG_MAX_LEN];
-	strncpy(buffer, msg, UART_MSG_MAX_LEN - 1);
-	buffer[UART_MSG_MAX_LEN - 1] = '\0';  // Asegura terminación
+	size_t len = strnlen(msg, UART_MSG_MAX_LEN - 1);
+	char *copy = pvPortMalloc(len + 1);
+	if (copy == NULL)
+		return;
 
-	// Enviar evento a la cola
-	BaseType_t sent = xQueueSend(uart_queue, &buffer, 0); // 0 = no espera si está llena
+	strncpy(copy, msg, len);
+	copy[len] = '\0';
+
+	BaseType_t sent = xQueueSend(uart_queue, &copy, 0);
 	if (sent != pdPASS) {
-		log_uart("UART → Error agregando evento a la cola uart_queue");
+		vPortFree(copy);  // libera si no se pudo enviar
 	}
 }
-
