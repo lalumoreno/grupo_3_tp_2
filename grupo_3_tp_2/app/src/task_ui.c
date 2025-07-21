@@ -7,8 +7,10 @@
 #include <string.h>
 #include <stdio.h>
 
-/* Cola de eventos del botón y leds*/
+/* Cola de eventos del botón*/
 extern QueueHandle_t button_event_queue;
+
+TaskHandle_t task_ui_handle = NULL;
 
 static void callback_process_completed_(void *context) {
 	led_event_t *event = (led_event_t*) context;
@@ -16,6 +18,11 @@ static void callback_process_completed_(void *context) {
 	log_uart("UUI - Memoria led_event liberada\r\n");
 }
 
+static void destroy_task() {
+	log_uart("UUI - Destruir tarea task_ui_handle\r\n");
+	task_ui_handle = NULL;
+	vTaskDelete(NULL);
+}
 void task_ui(void *argument) {
 
 	led_t *leds = (led_t*) argument;
@@ -84,5 +91,8 @@ void task_ui(void *argument) {
 				log_uart("UUI - Memoria insuficiente\r\n");
 			}
 		}
+
+		// Si no hay eventos, destruir la tarea
+		destroy_task();
 	}
 }
