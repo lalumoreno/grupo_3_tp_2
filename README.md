@@ -8,5 +8,5 @@
 
 ## Archivos soporte
 
-Link a video: PENDIENTE
+Link a video: https://drive.google.com/file/d/12qUhot7meMeV3-A1uUH0n8wx8udLyxKK/view?usp=sharing
 
