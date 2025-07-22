@@ -3,12 +3,20 @@
 #include "task_button.h"
 #include "task_uart.h"
 #include "board.h"
+#include "task_ui.h"
+#include "task_led.h"
 #include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
 
 /* Cola compartida con task_ui */
 extern QueueHandle_t button_event_queue;
+
+/* Tareas*/
+extern TaskHandle_t task_led_handle;
+extern TaskHandle_t task_ui_handle;
+
+led_t leds[3];
 
 /* Tiempos */
 #define TASK_PERIOD_MS        50
@@ -71,6 +79,31 @@ static void callback_process_completed_(void *context) {
 	log_uart("BTN - Memoria bnt_event liberada\r\n");
 }
 
+void create_ui_led_tasks(button_event_t event) {
+	BaseType_t status;
+	int led_type = event.type -1;
+
+	// Crear cola de leds
+	log_uart("BTN - Crear cola de led\r\n");
+	if (leds[led_type].queue == NULL) {
+		leds[led_type].queue = xQueueCreate(5, sizeof(led_event_t*));
+	}
+
+	if (task_ui_handle == NULL) {
+		log_uart("BTN - Crear tarea task_ui_handle\r\n");
+		status = xTaskCreate(task_ui, "task_ui", 128, (void*) leds,
+		tskIDLE_PRIORITY + 2, &task_ui_handle);
+		configASSERT(status == pdPASS);
+	}
+
+	if (task_led_handle == NULL) {
+		log_uart("BTN - Crear tarea task_led_handle\r\n");
+		status = xTaskCreate(task_led, "task_led", 128, (void*) leds,
+		tskIDLE_PRIORITY + 1, &task_led_handle);
+		configASSERT(status == pdPASS);
+	}
+}
+
 /* Tarea del botón (modo polling) */
 void task_button(void *argument) {
 
@@ -88,6 +121,10 @@ void task_button(void *argument) {
 
 		if (temp_event.type != BUTTON_TYPE_NONE) {
 
+			/* Crear tareas ui y led para procesar evento. Cada tarea se autodestruye */
+			create_ui_led_tasks(temp_event);
+
+			/* Crear y agregar evento a la cola */
 			button_event_t *bnt_event = (button_event_t*) pvPortMalloc(
 					sizeof(button_event_t));
 
@@ -103,7 +140,7 @@ void task_button(void *argument) {
 				bnt_event->callback_context = bnt_event;
 
 				// Mostrar mensaje por UART
-				sprintf(msg, "BTN - Boton: %s - Tiempo: %d ms\r\n",
+				sprintf(msg, "BTN - Boton: %s - Tiempo: %ld ms\r\n",
 						(bnt_event->type == BUTTON_TYPE_LONG) ? "LARGO" :
 						(bnt_event->type == BUTTON_TYPE_SHORT) ?
 								"CORTO" : "PULSO", bnt_event->duration);

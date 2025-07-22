@@ -10,12 +10,10 @@
 QueueHandle_t uart_queue;
 QueueHandle_t button_event_queue;
 
-led_t leds[3];
-const int led_count = sizeof(leds) / sizeof(led_t);
-
 void app_init(void) {
+
 	/* Crear cola UART */
-	uart_queue = xQueueCreate(10, sizeof(char*));
+	uart_queue = xQueueCreate(20, sizeof(char*));
 	configASSERT(uart_queue != NULL);
 	if (uart_queue == NULL) {
 		// Fallback directo si falla
@@ -32,28 +30,14 @@ void app_init(void) {
 			;
 	}
 
-	// Crear cola de leds
-	for (int i = 0; i < led_count; i++) {
-		leds[i].queue = xQueueCreate(5, sizeof(led_event_t*));
-	}
-
 	/* Crear tareas del sistema */
 	BaseType_t status;
-
 	status = xTaskCreate(task_uart, "task_uart", 128, NULL,
 	tskIDLE_PRIORITY + 1, NULL);
 	configASSERT(status == pdPASS);
 
 	status = xTaskCreate(task_button, "task_button", 128, NULL,
 	tskIDLE_PRIORITY + 2, NULL);
-	configASSERT(status == pdPASS);
-
-	status = xTaskCreate(task_ui, "task_ui", 128, (void*) leds,
-	tskIDLE_PRIORITY + 2, NULL);
-	configASSERT(status == pdPASS);
-
-	status = xTaskCreate(task_led, "task_led", 128, (void*) leds,
-	tskIDLE_PRIORITY + 1, NULL);
 	configASSERT(status == pdPASS);
 
 	/* Enviar mensaje por UART */
