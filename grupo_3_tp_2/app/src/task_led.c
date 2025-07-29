@@ -74,12 +74,13 @@ void task_led(void *argument) {
 						led_event->callback_process_completed(led_event);
 					} else {
 						log_uart("LED - led_event callback vacio\r\n");
+						vPortFree(led_event); // Liberar memoria si no hay callback
 					}
 
 				}
 
 				//Si no hay eventos, destruir la cola
-				log_uart("UUI - Destruir cola de led\r\n");
+				log_uart("LED - Destruir cola de led\r\n");
 				vQueueDelete(leds[i].queue);
 				leds[i].queue = NULL;
 			}

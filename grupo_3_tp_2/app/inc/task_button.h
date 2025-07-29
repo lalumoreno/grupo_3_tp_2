@@ -29,5 +29,6 @@ typedef struct {
 
 void task_button(void *argument);
 void EXTI_Callback_Button(void);  // para usar desde el callback de interrupción
+void freeEvent(button_event_t *event);
 
 #endif /* INC_TASK_BUTTON_H_ */

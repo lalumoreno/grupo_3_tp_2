@@ -79,7 +79,14 @@ static void callback_process_completed_(void *context) {
 	log_uart("BTN - Memoria bnt_event liberada\r\n");
 }
 
-void create_ui_led_tasks(button_event_t event) {
+void freeEvent(button_event_t *event) {
+	if (event != NULL) {
+		vPortFree(event);
+		log_uart("BTN - Memoria bnt_event liberada\r\n");
+	}
+}
+
+void create_sub_tasks(button_event_t event) {
 	BaseType_t status;
 	int led_type = event.type -1;
 
@@ -122,7 +129,7 @@ void task_button(void *argument) {
 		if (temp_event.type != BUTTON_TYPE_NONE) {
 
 			/* Crear tareas ui y led para procesar evento. Cada tarea se autodestruye */
-			create_ui_led_tasks(temp_event);
+			create_sub_tasks(temp_event);
 
 			/* Crear y agregar evento a la cola */
 			button_event_t *bnt_event = (button_event_t*) pvPortMalloc(

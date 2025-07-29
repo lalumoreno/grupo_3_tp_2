@@ -7,10 +7,8 @@
 #include <string.h>
 #include <stdio.h>
 
-/* Cola de eventos del botón*/
-extern QueueHandle_t button_event_queue;
-
 TaskHandle_t task_ui_handle = NULL;
+QueueHandle_t button_event_queue = NULL;
 
 static void callback_process_completed_(void *context) {
 	led_event_t *event = (led_event_t*) context;
@@ -27,6 +25,15 @@ void task_ui(void *argument) {
 
 	led_t *leds = (led_t*) argument;
 	button_event_t *button_event;
+
+	/* Crear cola de eventos del botón */
+	button_event_queue = xQueueCreate(1, sizeof(button_event_t*));
+	configASSERT(button_event_queue != NULL);
+	if (button_event_queue == NULL) {
+		log_uart("Error: no se pudo crear la cola de botón\r\n");
+		while (1)
+			;
+	}
 
 	while (1) {
 
@@ -86,10 +93,16 @@ void task_ui(void *argument) {
 					button_event->callback_process_completed(button_event);
 				} else {
 					log_uart("UUI - button_event callback vacio\r\n");
+					vPortFree(button_event); // Liberar memoria si no hay callback
 				}
 			} else {
 				log_uart("UUI - Memoria insuficiente\r\n");
 			}
+
+			//Si no hay eventos, destruir la cola
+			log_uart("UUI - Destruir cola de boton\r\n");
+			vQueueDelete(button_event_queue);
+			button_event_queue = NULL;
 		}
 
 		// Si no hay eventos, destruir la tarea
