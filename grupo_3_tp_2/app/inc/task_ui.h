@@ -5,8 +5,8 @@
 #include <stdbool.h>
 
 /* Declaración de la tarea de Interfaz de Usuario */
-void create_ui_task(int event_type);
-void task_ui(void *argument);
-bool add_event_to_ui_queue(button_event_t *event);
+void ui_task_create(int event_type);
+bool ui_queue_send(button_event *event);
+void ui_queue_init();
 
 #endif /* INC_TASK_UI_H_ */

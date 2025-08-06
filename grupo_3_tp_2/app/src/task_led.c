@@ -15,12 +15,17 @@ typedef enum
 
 TaskHandle_t task_led_handle = NULL;
 
+static void leds_off();
+static void led_red_on();
+static void led_green_on();
+static void led_blue_on();
+
 static void leds_off()
 {
 	HAL_GPIO_WritePin(LED_RED_PORT, LED_RED_PIN, GPIO_PIN_RESET);
 	HAL_GPIO_WritePin(LED_GREEN_PORT, LED_GREEN_PIN, GPIO_PIN_RESET);
 	HAL_GPIO_WritePin(LED_BLUE_PORT, LED_BLUE_PIN, GPIO_PIN_RESET);
-	log_uart("LED - LEDs apagados\r\n");
+	uart_log("LED - LEDs apagados\r\n");
 }
 
 static void led_red_on()
@@ -39,38 +44,38 @@ static void led_blue_on()
 }
 
 // Inicializar la cola de un LED
-void init_led_queue(led_t *led) {
+void led_queue_init(led_t *led) {
     if (led->queue == NULL) {
         led->queue = xQueueCreate(5, sizeof(led_event_t *));
         configASSERT(led->queue != NULL);
         if (led->queue != NULL) {
-            log_uart("LED - Cola creada correctamente\r\n");
+            uart_log("LED - Cola de led creada \r\n");
         } else {
-            log_uart("LED - Error al crear la cola\r\n");
+            uart_log("LED - Error al crear la cola led->queue \r\n");
         }
     }
 }
 
-bool add_led_event_to_queue(led_t *leds, led_event_type_t event_type, led_event_t *event)
+bool led_queue_add(led_t *leds, led_event_type_t event_type, led_event_t *event)
 {
 	if (leds[event_type].queue == NULL)
 	{
-		log_uart("LED - Cola del LED no inicializada\r\n");
+		uart_log("LED - Cola del LED no inicializada\r\n");
 		return false;
 	}
 
 	BaseType_t sent = xQueueSend(leds[event_type].queue, &event, portMAX_DELAY);
 	if (sent != pdPASS)
 	{
-		log_uart("LED - Error agregando evento a la cola del LED\r\n");
+		uart_log("LED - Error agregando evento a la cola del LED\r\n");
 		return false;
 	}
 
-	log_uart("LED - Evento agregado a la cola del LED\r\n");
+	uart_log("LED - Evento led_event agregado a cola del LED\r\n");
 	return true;
 }
 
-void process_led_event(led_t *led)
+void led_process_event(led_t *led)
 {
 	led_event_t *led_event;
 
@@ -85,36 +90,36 @@ void process_led_event(led_t *led)
 				switch (led_event->type)
 				{
 				case LED_EVENT_RED:
-					log_uart("LED - Encender LED Rojo\r\n");
+					uart_log("LED - Encender LED Rojo\r\n");
 					led_red_on();
 					break;
 				case LED_EVENT_GREEN:
-					log_uart("LED - Encender LED Verde\r\n");
+					uart_log("LED - Encender LED Verde\r\n");
 					led_green_on();
 					break;
 				case LED_EVENT_BLUE:
-					log_uart("LED - Encender LED Azul\r\n");
+					uart_log("LED - Encender LED Azul\r\n");
 					led_blue_on();
 					break;
 				default:
-					log_uart("LED - Estado Desconocido\r\n");
+					uart_log("LED - Estado Desconocido\r\n");
 					break;
 				}
 
-				log_uart("LED - Evento led_event procesado \r\n");
+				uart_log("LED - Evento led_event procesado \r\n");
 				if (led_event->callback_process_completed != NULL)
 				{
 					led_event->callback_process_completed(led_event);
 				}
 				else
 				{
-					log_uart("LED - led_event callback vacio\r\n");
+					uart_log("LED - led_event callback vacio\r\n");
 				}
 			}
-
-			log_uart("LED - Destruir cola de led\r\n");
+			
 			vQueueDelete(led[i].queue);
 			led[i].queue = NULL;
+			uart_log("LED - Cola de led eliminada\r\n");
 		}
 	}
 }

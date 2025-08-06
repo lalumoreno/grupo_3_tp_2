@@ -19,8 +19,8 @@ typedef struct
   uint32_t duration;
   callback_t callback_process_completed;
   void *callback_context;
-} button_event_t;
+} button_event;
 
-void init_task_button(void);
+void button_task_init(void);
 
 #endif /* INC_TASK_BUTTON_H_ */
