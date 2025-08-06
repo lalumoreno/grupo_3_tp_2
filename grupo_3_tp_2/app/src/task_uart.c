@@ -35,6 +35,7 @@ void init_task_uart(void) {
 
 // Destrucción de la cola UART
 void destroy_task_uart(void) {
+
     if (uart_queue != NULL) {
         vQueueDelete(uart_queue);
         uart_queue = NULL;

@@ -8,40 +8,66 @@
 #include <stdio.h>
 
 /* Cola de eventos del botón*/
-QueueHandle_t button_event_queue;
+QueueHandle_t ui_event_queue;
 TaskHandle_t task_ui_handle = NULL;
+
+led_t leds[NUM_LEDS] = {
+	{.queue = NULL}, // LED Rojo
+	{.queue = NULL}, // LED Verde
+	{.queue = NULL}  // LED Azul
+};
 
 void init_ui_queue()
 {
 	/* Crear cola de eventos del botón */
-	button_event_queue = xQueueCreate(1, sizeof(button_event_t *));
-	configASSERT(button_event_queue != NULL);
-	if (button_event_queue == NULL)
+	ui_event_queue = xQueueCreate(1, sizeof(button_event_t *));
+	configASSERT(ui_event_queue != NULL);
+	if (ui_event_queue == NULL)
 	{
 		log_uart("Error: no se pudo crear la cola de botón\r\n");
 		while (1)
 			;
 	}
 
-	log_uart("UUI - Cola button_event_queue creada\r\n");
+	log_uart("UUI - Cola ui_event_queue creada\r\n");
 }
 
-bool add_button_event_to_queue(button_event_t *event)
+void create_ui_task(int event_type)
 {
-	if (button_event_queue == NULL)
+	BaseType_t status;
+	int led_type = event_type - 1;
+	
+	// Crear cola de LEDs
+	init_led_queue(&leds[led_type]);
+
+	// Crear cola de boton
+	init_ui_queue();
+
+	if (task_ui_handle == NULL)
+	{
+		log_uart("BTN - Crear tarea task_ui_handle\r\n");
+		status = xTaskCreate(task_ui, "task_ui", 128, (void *)leds,
+							 tskIDLE_PRIORITY + 1, &task_ui_handle);
+		configASSERT(status == pdPASS);
+	}
+}
+
+bool add_event_to_ui_queue(button_event_t *event)
+{
+	if (ui_event_queue == NULL)
 	{
 		log_uart("UUI - Cola de eventos del botón no inicializada\r\n");
 		return false;
 	}
 
-	BaseType_t sent = xQueueSend(button_event_queue, &event, portMAX_DELAY);
+	BaseType_t sent = xQueueSend(ui_event_queue, &event, portMAX_DELAY);
 	if (sent != pdPASS)
 	{
-		log_uart("UUI - Error agregando evento a la cola button_event_queue\r\n");
+		log_uart("UUI - Error agregando evento a la cola ui_event_queue\r\n");
 		return false;
 	}
 
-	log_uart("UUI - Evento agregado a la cola button_event_queue\r\n");
+	log_uart("UUI - Evento agregado a la cola ui_event_queue\r\n");
 	return true;
 }
 
@@ -55,11 +81,11 @@ static void callback_process_completed(void *context)
 static void cleanup_ui_resources()
 {
 	// Liberar la cola de eventos si es necesario
-	if (button_event_queue != NULL)
+	if (ui_event_queue != NULL)
 	{
-		vQueueDelete(button_event_queue);
-		button_event_queue = NULL;
-		log_uart("UII - Cola button_event_queue eliminada\r\n");
+		vQueueDelete(ui_event_queue);
+		ui_event_queue = NULL;
+		log_uart("UII - Cola ui_event_queue eliminada\r\n");
 	}
 }
 
@@ -80,10 +106,10 @@ void task_ui(void *argument)
 
 	while (1)
 	{
-		// Procesar eventos de la cola button_event_queue
-		if (xQueueReceive(button_event_queue, &button_event, pdMS_TO_TICKS(100)) == pdPASS)
+		// Procesar eventos de la cola ui_event_queue
+		if (xQueueReceive(ui_event_queue, &button_event, pdMS_TO_TICKS(100)) == pdPASS)
 		{
-			log_uart("UII - Evento recibido en button_event_queue\r\n");
+			log_uart("UII - Evento recibido en ui_event_queue\r\n");
 
 			bool valid_event = true;
 			led_event_t *led_event = (led_event_t *)pvPortMalloc(
@@ -152,7 +178,7 @@ void task_ui(void *argument)
 		else
 		{
 			// Verificar si la cola está vacía
-			if (uxQueueMessagesWaiting(button_event_queue) == 0)
+			if (uxQueueMessagesWaiting(ui_event_queue) == 0)
 			{
 				// Si no hay eventos, destruir la tarea
 				destroy_task();

@@ -21,6 +21,6 @@ typedef struct
   void *callback_context;
 } button_event_t;
 
-void task_button(void *argument);
+void init_task_button(void);
 
 #endif /* INC_TASK_BUTTON_H_ */

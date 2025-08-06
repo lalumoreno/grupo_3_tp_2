@@ -9,12 +9,8 @@
 #include <string.h>
 #include <stdio.h>
 
-/* Tareas*/
-extern TaskHandle_t task_ui_handle;
-
-led_t leds[3];
-
-/* Tiempos */
+#define TASK_BUTTON_STACK_SIZE 128
+#define TASK_BUTTON_PRIORITY (tskIDLE_PRIORITY + 1)
 #define TASK_PERIOD_MS 50
 #define BUTTON_PULSE_TIMEOUT 200
 #define BUTTON_SHORT_TIMEOUT 1000
@@ -35,12 +31,9 @@ typedef struct
 
 static button_info_t button_info;
 
-/* Inicializa el estado del botón */
-static void init_button_info(void)
-{
-	button_info.counter = 0;
-	button_info.state = BUTTON_STATE_IDLE;
-}
+static void task_button(void *argument);
+static button_event_t button_process_state(bool is_pressed);
+static void callback_process_completed(void *context);
 
 /* Clasifica la pulsación */
 static button_event_t button_process_state(bool is_pressed)
@@ -92,32 +85,25 @@ static void callback_process_completed(void *context)
 	log_uart("BTN - Memoria bnt_event liberada desde callback\r\n");
 }
 
-void create_ui_task(button_event_t event)
+void init_task_button(void)
 {
-	BaseType_t status;
-	int led_type = event.type - 1;
-	
-	// Crear cola de LEDs
-	log_uart("BTN - Crear cola de led\r\n");
-	init_led_queue(&leds[led_type]);
-
-	// Crear cola de boton
-	init_ui_queue();
-
-	if (task_ui_handle == NULL)
+	BaseType_t status = xTaskCreate(task_button, "task_button", TASK_BUTTON_STACK_SIZE, NULL, TASK_BUTTON_PRIORITY, NULL);
+	configASSERT(status == pdPASS);
+	if (status != pdPASS)
 	{
-		log_uart("BTN - Crear tarea task_ui_handle\r\n");
-		status = xTaskCreate(task_ui, "task_ui", 128, (void *)leds,
-							 tskIDLE_PRIORITY + 1, &task_ui_handle);
-		configASSERT(status == pdPASS);
+		log_uart("Error: No se pudo crear la tarea Button\r\n");
+	}
+	else
+	{
+		log_uart("Tarea Button creada correctamente\r\n");
 	}
 }
 
 /* Tarea del botón (modo polling) */
-void task_button(void *argument)
+static void task_button(void *argument)
 {
-
-	init_button_info();
+	button_info.counter = 0;
+	button_info.state = BUTTON_STATE_IDLE;
 
 	while (1)
 	{
@@ -134,7 +120,7 @@ void task_button(void *argument)
 		{
 
 			/* Crear tareas ui y led para procesar evento. Cada tarea se autodestruye */
-			create_ui_task(temp_event);
+			create_ui_task(temp_event.type);
 
 			// Asignar memoria para el evento
 			button_event_t *bnt_event = (button_event_t *)pvPortMalloc(
@@ -159,7 +145,7 @@ void task_button(void *argument)
 				log_uart(msg);
 
 				// Enviar evento a la cola
-				if (!add_button_event_to_queue(bnt_event))
+				if (!add_event_to_ui_queue(bnt_event))
 				{
 					vPortFree(bnt_event); // Liberar si no se pudo enviar
 					log_uart("BTN - Memoria de bnt_event liberada \r\n");
