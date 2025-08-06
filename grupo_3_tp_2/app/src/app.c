@@ -18,18 +18,14 @@ void app_init(void) {
 		// Fallback directo si falla
 		while (1)
 			;
-	}
+	}	
 
-	task_ui_init();
-	
 	/* Crear tareas del sistema */
 	BaseType_t status;
-	status = xTaskCreate(task_uart, "task_uart", 128, NULL,
-	tskIDLE_PRIORITY + 1, NULL);
+	status = xTaskCreate(task_uart, "task_uart", 128, NULL,	tskIDLE_PRIORITY, NULL);
 	configASSERT(status == pdPASS);
 
-	status = xTaskCreate(task_button, "task_button", 128, NULL,
-	tskIDLE_PRIORITY + 2, NULL);
+	status = xTaskCreate(task_button, "task_button", 128, NULL,	tskIDLE_PRIORITY + 1, NULL);
 	configASSERT(status == pdPASS);
 
 	/* Enviar mensaje por UART */

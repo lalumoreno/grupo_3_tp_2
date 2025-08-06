@@ -10,7 +10,6 @@
 #include <stdio.h>
 
 /* Tareas*/
-extern TaskHandle_t task_led_handle;
 extern TaskHandle_t task_ui_handle;
 
 led_t leds[3];
@@ -86,17 +85,13 @@ void create_ui_led_tasks(button_event_t event) {
 		leds[led_type].queue = xQueueCreate(5, sizeof(led_event_t*));
 	}
 
+	// Crear cola de boton
+	task_ui_init();
+
 	if (task_ui_handle == NULL) {
 		log_uart("BTN - Crear tarea task_ui_handle\r\n");
 		status = xTaskCreate(task_ui, "task_ui", 128, (void*) leds,
-		tskIDLE_PRIORITY + 2, &task_ui_handle);
-		configASSERT(status == pdPASS);
-	}
-
-	if (task_led_handle == NULL) {
-		log_uart("BTN - Crear tarea task_led_handle\r\n");
-		status = xTaskCreate(task_led, "task_led", 128, (void*) leds,
-		tskIDLE_PRIORITY + 1, &task_led_handle);
+		tskIDLE_PRIORITY + 1, &task_ui_handle);
 		configASSERT(status == pdPASS);
 	}
 }
@@ -143,11 +138,7 @@ void task_button(void *argument) {
 				log_uart(msg);
 
 				// Enviar evento a la cola
-				if (add_button_event_to_queue(bnt_event)) {
-					log_uart("BTN - Evento agregado a la cola button_event_queue\r\n");
-					// Memoria liberada en callback_process_completed_
-				} else {
-					log_uart("BTN - Error agregando evento a la cola button_event_queue\r\n");
+				if (!add_button_event_to_queue(bnt_event)) {
 					vPortFree(bnt_event);  // Liberar si no se pudo enviar
 					log_uart("BTN - Memoria de bnt_event liberada \r\n");
 				}

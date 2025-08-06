@@ -57,71 +57,52 @@ bool add_led_event_to_queue(led_t *leds, led_event_type_t event_type, led_event_
 	return true;
 }
 
-static void destroy_task()
+void process_led_event(led_t *led)
 {
-	log_uart("LED - Destruir tarea task_led_handle\r\n");
-	task_led_handle = NULL;
-	vTaskDelete(NULL);
-}
-
-void task_led(void *argument)
-{
-
-	led_t *leds = (led_t *)argument;
 	led_event_t *led_event;
 
-	leds_off();
+	leds_off(); // Apagar todos los LEDs al inicio
 
-	while (1)
+	for (int i = 0; i < NUM_LEDS; i++)
 	{
-		for (int i = 0; i < 3; i++)
+		if (led[i].queue != NULL)
 		{
-			if (leds[i].queue != NULL)
+			if (xQueueReceive(led[i].queue, (void *)&led_event, 0) == pdTRUE)
 			{
-				if (xQueueReceive(leds[i].queue, (void *)&led_event,
-								  0) == pdTRUE)
+				switch (led_event->type)
 				{
-					// Apagar todos los LEDs
-					leds_off();
-
-					switch (led_event->type)
-					{
-					case LED_EVENT_RED:
-						log_uart("LED - Encender LED Rojo\r\n");
-						led_red_on();
-						break;
-					case LED_EVENT_GREEN:
-						log_uart("LED - Encender LED Verde\r\n");
-						led_green_on();
-						break;
-					case LED_EVENT_BLUE:
-						log_uart("LED - Encender LED Azul\r\n");
-						led_blue_on();
-						break;
-					default:
-						log_uart("LED - Estado Desconocido\r\n");
-						break;
-					}
-
-					log_uart("LED - Evento led_event procesado \r\n");
-					if (led_event->callback_process_completed != NULL)
-					{
-						led_event->callback_process_completed(led_event);
-					}
-					else
-					{
-						log_uart("LED - led_event callback vacio\r\n");
-					}
+				case LED_EVENT_RED:
+					log_uart("LED - Encender LED Rojo\r\n");
+					led_red_on();
+					break;
+				case LED_EVENT_GREEN:
+					log_uart("LED - Encender LED Verde\r\n");
+					led_green_on();
+					break;
+				case LED_EVENT_BLUE:
+					log_uart("LED - Encender LED Azul\r\n");
+					led_blue_on();
+					break;
+				default:
+					log_uart("LED - Estado Desconocido\r\n");
+					break;
 				}
 
-				// Si no hay eventos, destruir la cola
-				log_uart("UUI - Destruir cola de led\r\n");
-				vQueueDelete(leds[i].queue);
-				leds[i].queue = NULL;
+				log_uart("LED - Evento led_event procesado \r\n");
+				if (led_event->callback_process_completed != NULL)
+				{
+					led_event->callback_process_completed(led_event);
+				}
+				else
+				{
+					log_uart("LED - led_event callback vacio\r\n");
+				}
 			}
-		}
 
-		// Si no hay eventos, destruir la tarea
-		destroy_task();
+			log_uart("LED - Destruir cola de led\r\n");
+			vQueueDelete(led[i].queue);
+			led[i].queue = NULL;
+		}
 	}
 }
+

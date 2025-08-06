@@ -1,10 +1,3 @@
-/*
- * task_button.h
- *
- *  Created on: Jul 5, 2025
- *      Author: HP VICTUS
- */
-
 #ifndef INC_TASK_BUTTON_H_
 #define INC_TASK_BUTTON_H_
 
@@ -28,6 +21,5 @@ typedef struct {
 } button_event_t;
 
 void task_button(void *argument);
-void EXTI_Callback_Button(void);  // para usar desde el callback de interrupción
 
 #endif /* INC_TASK_BUTTON_H_ */

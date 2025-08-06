@@ -20,8 +20,10 @@ typedef struct {
 	QueueHandle_t queue;
 } led_t;
 
+#define NUM_LEDS 3
+
 /* Declaraciones de las tareas para los LEDs */
-void task_led(void *argument);
+void process_led_event(led_t *led);
 bool add_led_event_to_queue(led_t *leds, led_event_type_t event_type, led_event_t *event);
 
 #endif /* INC_TASK_LED_H_ */
