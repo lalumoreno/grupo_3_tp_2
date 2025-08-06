@@ -9,9 +9,6 @@
 #include <string.h>
 #include <stdio.h>
 
-/* Cola compartida con task_ui */
-extern QueueHandle_t button_event_queue;
-
 /* Tareas*/
 extern TaskHandle_t task_led_handle;
 extern TaskHandle_t task_ui_handle;
@@ -135,8 +132,7 @@ void task_button(void *argument) {
 				log_uart(msg);
 
 				*bnt_event = temp_event;
-				bnt_event->callback_process_completed =
-						callback_process_completed_;
+				bnt_event->callback_process_completed =	callback_process_completed_;
 				bnt_event->callback_context = bnt_event;
 
 				// Mostrar mensaje por UART
@@ -147,13 +143,15 @@ void task_button(void *argument) {
 				log_uart(msg);
 
 				// Enviar evento a la cola
-				BaseType_t sent = xQueueSend(button_event_queue, &bnt_event, 0);
-				if (sent != pdPASS) {
-					log_uart(
-							"BTN - Error agregando evento a la cola button_event_queue\r\n");
+				if (add_button_event_to_queue(bnt_event)) {
+					log_uart("BTN - Evento agregado a la cola button_event_queue\r\n");
+					// Memoria liberada en callback_process_completed_
+				} else {
+					log_uart("BTN - Error agregando evento a la cola button_event_queue\r\n");
 					vPortFree(bnt_event);  // Liberar si no se pudo enviar
-					log_uart("BTN → Memoria de bnt_event liberada \r\n");
+					log_uart("BTN - Memoria de bnt_event liberada \r\n");
 				}
+
 			} else {
 				log_uart("BTN - Memoria insuficiente\r\n");
 			}

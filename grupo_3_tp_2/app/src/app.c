@@ -8,7 +8,6 @@
 
 /* Definición de colas */
 QueueHandle_t uart_queue;
-QueueHandle_t button_event_queue;
 
 void app_init(void) {
 
@@ -21,15 +20,8 @@ void app_init(void) {
 			;
 	}
 
-	/* Crear cola de eventos del botón */
-	button_event_queue = xQueueCreate(1, sizeof(button_event_t*));
-	configASSERT(button_event_queue != NULL);
-	if (button_event_queue == NULL) {
-		log_uart("Error: no se pudo crear la cola de botón\r\n");
-		while (1)
-			;
-	}
-
+	task_ui_init();
+	
 	/* Crear tareas del sistema */
 	BaseType_t status;
 	status = xTaskCreate(task_uart, "task_uart", 128, NULL,

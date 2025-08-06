@@ -1,14 +1,8 @@
-/*
- * task_led.h
- *
- *  Created on: Jul 5, 2025
- *      Author: HP VICTUS
- */
-
 #ifndef INC_TASK_LED_H_
 #define INC_TASK_LED_H_
 
 #include "cmsis_os.h"
+#include <stdbool.h>
 
 typedef enum {
 	LED_EVENT_RED, LED_EVENT_GREEN, LED_EVENT_BLUE
@@ -28,5 +22,6 @@ typedef struct {
 
 /* Declaraciones de las tareas para los LEDs */
 void task_led(void *argument);
+bool add_led_event_to_queue(led_t *leds, led_event_type_t event_type, led_event_t *event);
 
 #endif /* INC_TASK_LED_H_ */
