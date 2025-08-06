@@ -1,12 +1,11 @@
 #ifndef INC_TASK_UI_H_
 #define INC_TASK_UI_H_
 
-#include "cmsis_os.h"
 #include "task_button.h"  // para button_type_t
 #include <stdbool.h>
 
 /* Declaración de la tarea de Interfaz de Usuario */
-void task_ui_init();
+void init_ui();
 void task_ui(void *argument);
 bool add_button_event_to_queue(button_event_t *event);
 

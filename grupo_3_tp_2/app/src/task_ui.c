@@ -11,7 +11,7 @@
 QueueHandle_t button_event_queue;
 TaskHandle_t task_ui_handle = NULL;
 
-void task_ui_init()
+void init_ui()
 {
 	/* Crear cola de eventos del botón */
 	button_event_queue = xQueueCreate(1, sizeof(button_event_t *));
@@ -45,11 +45,11 @@ bool add_button_event_to_queue(button_event_t *event)
 	return true;
 }
 
-static void callback_process_completed_(void *context)
+static void callback_process_completed(void *context)
 {
 	led_event_t *event = (led_event_t *)context;
 	vPortFree(event);
-	log_uart("UUI - Memoria led_event liberada\r\n");
+	log_uart("UUI - Memoria led_event liberada desde callback\r\n");
 }
 
 static void cleanup_ui_resources()
@@ -96,7 +96,7 @@ void task_ui(void *argument)
 						sizeof(*led_event));
 				log_uart(msg);
 
-				led_event->callback_process_completed = callback_process_completed_;
+				led_event->callback_process_completed = callback_process_completed;
 				led_event->callback_context = led_event;
 
 				switch (button_event->type)

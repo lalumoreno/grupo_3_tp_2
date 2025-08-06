@@ -6,33 +6,37 @@
 #include "task_uart.h"
 #include "board.h"
 
-/* Definición de colas */
-QueueHandle_t uart_queue;
+#define TASK_BUTTON_STACK_SIZE 128
+#define TASK_BUTTON_PRIORITY (tskIDLE_PRIORITY + 1)
+#define UART_QUEUE_LENGTH 20
 
-void app_init(void) {
+/* Prototipos de funciones */
 
-	/* Crear cola UART */
-	uart_queue = xQueueCreate(20, sizeof(char*));
-	configASSERT(uart_queue != NULL);
-	if (uart_queue == NULL) {
-		// Fallback directo si falla
-		while (1)
-			;
-	}	
+static void init_task_button(void);
 
+static void init_task_button(void)
+{
+	BaseType_t status = xTaskCreate(task_button, "task_button", TASK_BUTTON_STACK_SIZE, NULL, TASK_BUTTON_PRIORITY, NULL);
+	configASSERT(status == pdPASS);
+	if (status != pdPASS)
+	{
+		log_uart("Error: No se pudo crear la tarea Button\r\n");
+	}
+	else
+	{
+		log_uart("Tarea Button creada correctamente\r\n");
+	}
+}
+
+void app_init(void)
+{
 	/* Crear tareas del sistema */
-	BaseType_t status;
-	status = xTaskCreate(task_uart, "task_uart", 128, NULL,	tskIDLE_PRIORITY, NULL);
-	configASSERT(status == pdPASS);
-
-	status = xTaskCreate(task_button, "task_button", 128, NULL,	tskIDLE_PRIORITY + 1, NULL);
-	configASSERT(status == pdPASS);
+	init_task_uart();
+	init_task_button();
 
 	/* Enviar mensaje por UART */
 	log_uart("APP - App init\r\n");
-
 #ifdef _F429ZI_
 	log_uart("APP - Board F429ZI\r\n");
 #endif
-
 }
