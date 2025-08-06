@@ -38,6 +38,19 @@ static void led_blue_on()
 	HAL_GPIO_WritePin(LED_BLUE_PORT, LED_BLUE_PIN, GPIO_PIN_SET);
 }
 
+// Inicializar la cola de un LED
+void init_led_queue(led_t *led) {
+    if (led->queue == NULL) {
+        led->queue = xQueueCreate(5, sizeof(led_event_t *));
+        configASSERT(led->queue != NULL);
+        if (led->queue != NULL) {
+            log_uart("LED - Cola creada correctamente\r\n");
+        } else {
+            log_uart("LED - Error al crear la cola\r\n");
+        }
+    }
+}
+
 bool add_led_event_to_queue(led_t *leds, led_event_type_t event_type, led_event_t *event)
 {
 	if (leds[event_type].queue == NULL)

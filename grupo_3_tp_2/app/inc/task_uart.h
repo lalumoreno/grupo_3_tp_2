@@ -4,6 +4,7 @@
 #define UART_MSG_MAX_LEN 64
 
 void init_task_uart(void);
+void destroy_task_uart(void);
 void log_uart(const char *msg);
 
 #endif /* TASK_UART_H_ */

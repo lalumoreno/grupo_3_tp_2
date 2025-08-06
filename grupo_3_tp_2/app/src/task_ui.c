@@ -11,7 +11,7 @@
 QueueHandle_t button_event_queue;
 TaskHandle_t task_ui_handle = NULL;
 
-void init_ui()
+void init_ui_queue()
 {
 	/* Crear cola de eventos del botón */
 	button_event_queue = xQueueCreate(1, sizeof(button_event_t *));

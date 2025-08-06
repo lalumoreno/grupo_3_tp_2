@@ -23,6 +23,7 @@ typedef struct {
 #define NUM_LEDS 3
 
 /* Declaraciones de las tareas para los LEDs */
+void init_led_queue(led_t *led);
 void process_led_event(led_t *led);
 bool add_led_event_to_queue(led_t *leds, led_event_type_t event_type, led_event_t *event);
 
