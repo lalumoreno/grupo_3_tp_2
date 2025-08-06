@@ -1,10 +1,3 @@
-/*
- * task_button.h
- *
- *  Created on: Jul 5, 2025
- *      Author: HP VICTUS
- */
-
 #ifndef INC_TASK_BUTTON_H_
 #define INC_TASK_BUTTON_H_
 
@@ -20,14 +13,14 @@ typedef enum
 
 typedef void (*callback_t)(void *context);
 
-typedef struct {
-	button_type_t type;
-	uint32_t duration;
-	callback_t callback_process_completed;
-    void *callback_context;
-} button_event_t;
+typedef struct
+{
+  button_type_t type;
+  uint32_t duration;
+  callback_t callback_process_completed;
+  void *callback_context;
+} button_event;
 
-void task_button(void *argument);
-void EXTI_Callback_Button(void);  // para usar desde el callback de interrupción
+void button_task_init(void);
 
 #endif /* INC_TASK_BUTTON_H_ */

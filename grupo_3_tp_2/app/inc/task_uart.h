@@ -1,10 +1,9 @@
 #ifndef TASK_UART_H_
 #define TASK_UART_H_
 
-#include "cmsis_os.h"
+#define UART_MSG_MAX_LEN 64
 
-void task_uart(void *argument);
-void log_uart(const char *msg);
-void uart_enviar_estado_boton(void);
+void uart_task_init(void);
+void uart_log(const char *msg);
 
 #endif /* TASK_UART_H_ */
